@@ -1,174 +1,86 @@
-# NYC Taxi Fare and Trip Duration Prediction
+# NYC Taxi Prediction Microservices
 
-> A FastAPI-based Machine Learning application for predicting taxi fares and trip durations in New York City
+This project implements a machine learning solution for predicting taxi fares and trip durations in New York City. It follows a microservices architecture with the following components:
 
-## Project Overview
-
-This project implements a machine learning solution to predict taxi fares and trip durations in New York City using data available at the start of the ride. The system uses a combination of supervised learning models and neural networks to make accurate predictions based on features like pickup/dropoff coordinates, trip distance, start time, passenger count, and rate code.
-
-The application provides both a REST API for integration with other systems and a web interface for easy interaction by end users.
-
-## Key Features
-
-- Real-time prediction of taxi fares and trip durations
-- Exploratory data analysis to identify key factors affecting ride costs and times
-- Heatmap visualization of taxi demand across different NYC regions
-- Secure API with proper authentication and rate limiting
-- Comprehensive documentation for all endpoints
-
-## Technical Architecture
-
-The application is built using a microservices architecture with the following components:
-
-- **Python FastAPI**: Core backend service that handles prediction requests
-- **Machine Learning Pipeline**: Preprocesses data and serves predictions using TensorFlow and scikit-learn
-- **Web UI**: Interactive interface for users to input trip parameters and view predictions
-- **Redis**: Message broker for communication between services
-- **PostgreSQL**: Database for storing trip data and user feedback
-- **Docker**: Containerization for easy deployment and scalability
+- **API Service**: FastAPI-based backend that handles HTTP requests and serves predictions
+- **ML Service**: Dedicated container for machine learning models and inference
+- **Redis**: Message broker for inter-service communication
+- **PostgreSQL**: Database for storing prediction history and analytics
 
 ## Getting Started
 
 ### Prerequisites
 
-- Docker and docker-compose
+- Docker and Docker Compose
 - Git
-- (Optional) Linux subsystem for Windows (WSL2)
 
-### Installation
+### Setup and Deployment
 
-1. Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/nyc-taxi-prediction.git
-cd nyc-taxi-prediction
-```
-
-2. Set up environment variables:
-
-```bash
-cp .env.original .env
-```
-
-3. Create the shared Docker network:
+1. Create the shared Docker network:
 
 ```bash
 docker network create shared_network
 ```
 
-4. Start the services:
+2. Start all services:
 
 ```bash
-docker-compose up --build -d
+docker-compose up --build
 ```
 
-5. Populate the database:
+For Mac M1 users, the project includes a specialized Dockerfile (`Dockerfile.M1`) that ensures compatibility with ARM architecture.
+
+## API Endpoints
+
+- **[GET] /**: Health check endpoint
+- **[POST] /predict**: Submit trip details for fare and duration prediction
+  - Expects a JSON object with pickup/dropoff locations, trip distance, etc.
+  - Returns fare and duration predictions with confidence intervals
+- **[GET] /predictions**: Retrieve historical predictions
+  - Supports filtering and pagination
+
+## Web Interface
+
+A user-friendly web interface is available at `http://localhost:9090` for submitting prediction requests through a form.
+
+## API Documentation
+
+FastAPI automatically generates comprehensive API documentation:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## Architecture Details
+
+The project uses a message queue architecture:
+
+1. API service receives prediction requests
+2. Requests are serialized and sent to Redis
+3. ML service processes requests and returns predictions
+4. Results are stored in PostgreSQL for future reference
+
+## Development
+
+### Testing
+
+Each service includes its own test suite that can be run with:
 
 ```bash
-cd api
-cp .env.original .env
-docker-compose up --build -d
+# For API service
+docker build -t api_test --target test ./api
+
+# For ML service
+docker build -t model_test --target test ./model
 ```
 
-### Note for Mac M1 Users
+### Extending the Project
 
-This project includes specific optimizations for Mac M1 architecture:
+New features can be added by:
 
-- Use the provided `Dockerfile.M1` in the model directory which uses a compatible Python version
-- The Dockerfile uses condaforge/miniforge3 with Python 3.8 to ensure compatibility with TensorFlow and numpy
-
-## Accessing the Application
-
-### API Documentation
-
-The FastAPI documentation is available at: http://localhost:8000/docs
-
-To authenticate:
-
-- Username: admin@example.com
-- Password: admin
-
-![FastAPI Documentation](fastapi_docs.png)
-
-### Web Interface
-
-The web UI is accessible at: http://localhost:9090
-
-![UI Login Screen](ui_login.png)
-![UI Prediction Screen](ui_classify.png)
-
-Login credentials:
-
-- Username: admin@example.com
-- Password: admin
-
-## Development and Testing
-
-### Code Style
-
-This project follows strict code style guidelines. To format code:
-
-```bash
-isort --profile=black . && black --line-length 88 .
-```
-
-### Running Tests
-
-The project includes comprehensive tests for all modules:
-
-#### API Tests
-
-```bash
-cd api/
-docker build -t fastapi_test --progress=plain --target test .
-```
-
-#### Model Tests
-
-```bash
-cd model/
-docker build -t model_test --progress=plain --target test .
-```
-
-#### UI Tests
-
-```bash
-cd ui/
-docker build -t ui_test --progress=plain --target test .
-```
-
-#### End-to-End Integration Tests
-
-Install testing requirements:
-
-```bash
-pip3 install -r tests/requirements.txt
-```
-
-Run the integration tests:
-
-```bash
-python tests/test_integration.py
-```
-
-## Project Structure
-
-```
-├── api/                # FastAPI backend service
-├── model/              # ML models and prediction logic
-├── ui/                 # Web user interface
-├── tests/              # Integration tests
-├── uploads/            # Shared volume for uploaded data
-└── docker-compose.yml  # Service orchestration
-```
-
-## Future Improvements
-
-- Integration with real-time traffic data
-- Addition of weather condition factors to improve predictions
-- Geographic expansion to other major cities
-- Mobile application for on-the-go predictions
+1. Updating model training in the ML service
+2. Extending API endpoints in the FastAPI service
+3. Enhancing the web interface for additional functionality
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
